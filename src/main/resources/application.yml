@@ -1,0 +1,109 @@
+# spring profiles
+# be used src/main/resources/application-{profile}.yml as a config file.
+# in the case of production, "java -jar -Dspring.profiles.active=prod build/libs/myapp.jar".
+spring:
+  profiles:
+    active: dev
+swagger:
+  info:
+    title: ENV Finance API
+    version: "v0.1"
+    license: Copyright 2017 ENV Finance. All rights reserved.
+    contact:
+      name: ENV Developer
+      url: http://evn.com
+      email: xxx@email.com
+    description: |
+      This is the very basic prototype for EVN Finance project.
+  
+      ### RESTful
+      It would be nice to use [RESTful](http://en.wikipedia.org/wiki/Representational_state_transfer) standard to design endpoints.
+      Every endpoint (URL) may support one of four different http verbs. GET
+      requests fetch information about an object, POST requests create objects,
+      PUT requests update objects, and finally DELETE requests will delete
+      objects.
+  
+      `But`, since many old browsers together with some http clients (python clients) don't support PUT or DELETE. Of course we can made it easy to
+      fake PUTs and DELETEs. All you have to do is do a POST with _method=PUT or
+      _method=DELETE as a parameter and we will treat it as if you used PUT or
+      DELETE respectively. Another drawback of full RESTful standard is we can make a common request, response structrue, like 'meta', 'data', ...
+  
+      `So` at current version of running system at EVN Finance, we just only use POST, no need to fake anymore, to make it clearly work as PUT and DELETE of RESTful, you should use naming convention like `resource/create`, `resource/delete`.
+      This project has to follow this style.
+      
+      > Small thoughts: The reason to not follow RESTful can't convince me at all :)
+      ### Structure
+  
+      #### The Envelope
+      * `Request`:
+      Every response is contained by an envelope. That is, each response has a
+      predictable set of keys with which you can expect to interact:
+      ```json
+      {
+          "meta": {
+              "uid": "xxxxxxx",
+              "languageCode": "en",
+              "countryCode": "US"
+          },
+          "data": {
+              ...
+          }
+      }
+      ```
+  
+      * `Response`:
+      Every response is contained by an envelope. That is, each response has a
+      predictable set of keys with which you can expect to interact:
+      ```json
+      {
+          "status": 200,
+          "meta": {
+              "uid": "xxxxxxx",
+              "languageCode": "en",
+              "countryCode": "US"
+          },
+          "data": {
+              ...
+          }
+      }
+      ```
+      `uid` should be sent from client request, if not, API will random a key and response in `meta` key.
+  
+      * `Error`:
+      If all goes well, you'll only ever see a HTTP Status with value
+      `200`. However, sometimes things go wrong, and in that case you might see a
+      response like:
+      
+      ```json
+      {
+          "status": 400,
+          "meta": {
+              "uid": "xxxxxxx",
+              "languageCode": "en",
+              "countryCode": "US"
+          },
+          "error": {
+              "code": "HTLERR2000",
+              "type": "VALIDATION",
+              "messageInvalid request parameters,
+              "detailMessage": "Maximum number of adults must be in range of 1-9",
+              "invalidParameters": []
+          }
+      }
+      ```
+  
+      In this case, HTTP Status will be 400, 500, 401, 403, etc.
+      
+      `invalidParameters` is detail fields error in scenario of validation.
+  
+      #### Meta
+      The meta key is used to communicate extra information about the response to
+      the developer
+      
+      #### Status
+      If all goes well, you'll only ever see a code key with value `200 (Success)`, otherwise, it could be `400 (bad request), 500 (internal system error), 401 (Unauthorized), 403 (Forbidden), etc`.
+      This is used for migrating from old version of client, that doesn't support checking HTTPStatus.
+  
+      #### Data
+      The data key is the meat of the response. It may be a list or dictionary,
+      but either way this is where you'll find the data you requested.

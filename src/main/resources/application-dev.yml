@@ -1,0 +1,23 @@
+# logger
+logging:
+  level:
+    root: INFO
+
+server:
+    port: 8081
+    
+imx-api:
+  disbursementInfoUrl: http://localhost:8080/contract-info
+  timeout: 60
+  
+spring:
+  rabbitmq:
+    host: 192.168.100.243
+    port: 5672    
+    username: developer
+    password: abc1234
+
+jackson:
+  deserialization:
+    ACCEPT_EMPTY_STRING_AS_NULL_OBJECT: true
+    ACCEPT_SINGLE_VALUE_AS_ARRAY: true

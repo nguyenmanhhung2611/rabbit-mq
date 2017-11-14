@@ -1,0 +1,41 @@
+# logger
+logging:
+  level:
+    root: INFO
+
+server:
+    port: 8081
+
+spring:
+  datasource:
+    driverClassName: org.postgresql.Driver
+    url: jdbc:postgresql://192.168.100.240:5432/test_dev?zeroDateTimeBehavior=convertToNull&characterEncoding=utf8
+    username: test_dev
+    password: 123456
+    initialize: false
+    # connection pool(default)
+    max-active: 10
+    max-idle: 8
+    min-idle: 8
+    initial-size: 10
+    test-on-borrow: true
+    validation-query: SELECT 1
+    remove-abandoned: true
+    remove-abandoned-timeout: 60
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    show-sql: true
+    generate-ddl: true
+    hibernate:
+      naming-strategy: org.hibernate.cfg.EJB3NamingStrategy
+      ddl-auto: create
+    properties:
+      hibernate.cache.use_second_level_cache: false
+      hibernate.cache.use_query_cache: false
+      hibernate.generate_statistics: true
+      hibernate.hbm2ddl.auto: create
+      
+  jackson:
+    deserialization:
+      ACCEPT_EMPTY_STRING_AS_NULL_OBJECT: true
+      ACCEPT_SINGLE_VALUE_AS_ARRAY: true
