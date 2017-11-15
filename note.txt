@@ -1,0 +1,20 @@
+Docker:
+Docker hub: Nơi lấy những images
+https://hub.docker.com/
+
+
+
+https://hub.docker.com/_/rabbitmq/
+http://blog.appconus.com/2016/04/15/docker-cho-nguoi-moi-bat-dau-p1/
+
+
+
+Các lệnh docker cơ bản:
++ Kiểm tra các images đã cài vào máy: docker images
++ Xóa images đã cài vào máy: docker rmi <imagesID>
++ Kiểm tra các container đang chạy: docker ps
++ Kiểm tra tất cả các container: docker ps -a
++ Xóa các container: docker rm <containerID>
++ Run container: docker run <dockerImagesREPOSITORY:TAG>
++ Để vào 1 container: docker exec -it <ContainerID hay ContainerNAMES>
++ Xem ip của container: docker inspect <ContainerID hay ContainerNAMES>

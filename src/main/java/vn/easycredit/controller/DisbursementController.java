@@ -37,7 +37,20 @@ public class DisbursementController {
 	@RequestMapping(value = "/api/disbursementService/v1/checkContractInfo", method = RequestMethod.POST)
 	public DisbursementInfoResponse checkContractInfo(@Valid @RequestBody DisbursementInfoRequest info) throws Exception {
 		//send message logs request to rabbitMQ
-		disbursementInfoService.prepareRequest(info);
+		disbursementInfoService.insertLogInfo(info);
+		
+		return new DisbursementInfoResponse(Constant.RESPONSE_SUCCESS, disbursementInfoService.getDisbursementInfo(info));
+	}
+	
+	@ApiOperation(value = "Check Debursement Info", notes = "Check Debursement Info.")
+	@ApiResponses(value = {
+			@ApiResponse(code = 200, message = Constant.SUCCESS_MESSAGE, response = DisbursementInfoResponse.class),
+			@ApiResponse(code = 400, message = Constant.BADREQUEST_MESSAGE, response = ErrorResponse.class),
+			@ApiResponse(code = 500, message = Constant.INTERNALERROR_MESSAGE, response = ErrorResponse.class) })
+	@RequestMapping(value = "/api/disbursementService/v1/disburseSucceed", method = RequestMethod.POST)
+	public DisbursementInfoResponse disburseSucceed(@Valid @RequestBody DisbursementInfoRequest info) throws Exception {
+		//send message logs request to rabbitMQ
+		disbursementInfoService.insertLogSuccess(info);
 		
 		return new DisbursementInfoResponse(Constant.RESPONSE_SUCCESS, disbursementInfoService.getDisbursementInfo(info));
 	}

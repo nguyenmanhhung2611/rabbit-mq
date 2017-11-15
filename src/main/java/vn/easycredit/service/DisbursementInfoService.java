@@ -1,9 +1,13 @@
 package vn.easycredit.service;
 
+import java.net.InetAddress;
+import java.net.SocketException;
+import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -46,6 +50,9 @@ public class DisbursementInfoService {
 	private RestTemplate imxRestTemplate;
 	
 	private final RabbitTemplate rabbitTemplate;
+	
+	final String uuidInfo = UUID.randomUUID().toString();
+	final String uuidSuccess = UUID.randomUUID().toString();
 
 	@Autowired
 	private HttpServletRequest request;
@@ -73,9 +80,9 @@ public class DisbursementInfoService {
 	 * 
 	 * @param request
 	 * @return
-	 * @throws ImxContractNotFoundException
+	 * @throws Exception 
 	 */
-	public DisbursementInfoResponseBody getDisbursementInfo(DisbursementInfoRequest request) throws ImxContractNotFoundException {
+	public DisbursementInfoResponseBody getDisbursementInfo(DisbursementInfoRequest request) throws Exception {
 		if(Arrays.asList(Utilities.PARTNER_CODE).contains(request.getPartnerCode())){
 			DisbursementInfoRequestIMX req = copyPropertiesRequest(request);
 
@@ -84,12 +91,18 @@ public class DisbursementInfoService {
 					.postForEntity(imxApiSetting.getDisbursementInfoUrl(), req, DisbursementInfoResponseIMX.class);
 
 			if (HttpStatus.OK != responseEntity.getStatusCode()) {
+				//send message logs request to rabbitMQ
+//				updateLogInfo(info);
 				throw new ImxContractNotFoundException("Cannot get Imx Disbursement Info from IMX");
 			}
 
 			DisbursementInfoResponseBody body = copyPropertiesResponse(responseEntity.getBody());
+			//send message logs request to rabbitMQ
+			insertHistory(request);
 			return body;
 		}
+		//send message logs request to rabbitMQ
+//		updateLogInfo(info);
 		throw new ImxContractNotFoundException("Cannot get Imx Disbursement Info from IMX");
 	}
 
@@ -129,8 +142,62 @@ public class DisbursementInfoService {
 	 * @param logsRequest
 	 * @throws Exception
 	 */
-	public void prepareRequest(DisbursementInfoRequest info) throws Exception{
-		LogsInfoRequest<DisbursementInfoRequest> logsRequest = new LogsInfoRequest<>(Constant.DISBURSEMENT_INFO_INFLOW, getHeadersInfo(), info);
+	public void insertLogInfo(DisbursementInfoRequest info) throws Exception{
+		String ip = getIp();
+		LogsInfoRequest<DisbursementInfoRequest> logsInfoRequest = new LogsInfoRequest<>(ip, 
+				Constant.LOGS_STATUS_INSERT_WORKING_LOG, uuidInfo, Constant.DISBURSEMENT_INFO_INFLOW, getHeaders(), info, Constant.STATUS_PENDING);
+		
+		Gson gson = new Gson();
+		String jsonIntoString = gson.toJson(logsInfoRequest);
+
+		//send message
+		run(jsonIntoString);
+	}
+	
+	/**
+	 * prepare param for send message logs request to rabbitMQ
+	 * @param logsRequest
+	 * @throws Exception
+	 */
+	public void insertHistory(DisbursementInfoRequest info) throws Exception{
+		String ip = getIp();
+		LogsInfoRequest<DisbursementInfoRequest> logsInfoRequest = new LogsInfoRequest<>(ip, 
+				Constant.LOGS_STATUS_INSERT_HISTORY, uuidInfo, Constant.DISBURSEMENT_INFO_INFLOW, getHeaders(), info, Constant.STATUS_SUCCESS);
+		
+		Gson gson = new Gson();
+		String jsonIntoString = gson.toJson(logsInfoRequest);
+
+		//send message
+		run(jsonIntoString);
+	}
+	
+	
+	/**
+	 * prepare param for send message logs request to rabbitMQ
+	 * @param logsRequest
+	 * @throws Exception
+	 */
+	public void updateLogInfo(DisbursementInfoRequest info) throws Exception{
+		String ip = getIp();
+		LogsInfoRequest<DisbursementInfoRequest> logsRequest = new LogsInfoRequest<>(ip, 
+				Constant.LOGS_STATUS_UPDATE_WORKING_LOG, uuidInfo, Constant.DISBURSEMENT_INFO_INFLOW, getHeaders(), info, Constant.STATUS_FAIL);
+
+		Gson gson = new Gson();
+		String jsonInString = gson.toJson(logsRequest);
+
+		//send message
+		run(jsonInString);
+	}
+	
+	/**
+	 * prepare param for send message logs request to rabbitMQ
+	 * @param logsRequest
+	 * @throws Exception
+	 */
+	public void insertLogSuccess(DisbursementInfoRequest info) throws Exception{
+		String ip = getIp();
+		LogsInfoRequest<DisbursementInfoRequest> logsRequest = new LogsInfoRequest<>(ip, 
+				Constant.LOGS_STATUS_INSERT_WORKING_LOG, uuidSuccess, Constant.DISBURSEMENT_SUCCESS_INFLOW, getHeaders(), info, Constant.STATUS_PENDING);
 
 		Gson gson = new Gson();
 		String jsonInString = gson.toJson(logsRequest);
@@ -150,7 +217,7 @@ public class DisbursementInfoService {
 	/*
 	 * get all param from request header
 	 */
-	private Map<String, String> getHeadersInfo() {
+	private Map<String, String> getHeaders() {
 		Map<String, String> map = new HashMap<String, String>();
 		@SuppressWarnings("rawtypes")
 		Enumeration headerNames = request.getHeaderNames();
@@ -161,5 +228,17 @@ public class DisbursementInfoService {
 		}
 		return map;
 	}
-
+	
+	/*
+	 * get IP
+	 */
+	private String getIp() throws SocketException {
+		String ip = "";
+		try {
+			ip = InetAddress.getLocalHost().getHostAddress();
+		} catch (UnknownHostException e1) {
+			return null;
+		}
+		return ip;
+	}
 }
